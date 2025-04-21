@@ -1,96 +1,124 @@
-// script.js
+// script.js com suporte a múltiplos idiomas e sincronização GitHub
 
 const funcionarios = [];
 const ferramentas = [];
 const emprestimos = [];
 let contadorFerramentas = {};
+let idiomaAtual = 'pt';
 
-function mostrarSecao(secao) {
-  const container = document.getElementById('conteudo');
-  const hoje = new Date().toISOString().split('T')[0];
+const repo = 'danielgmonteiro/controle-ferramentas';
+const token = window.getGitHubToken();
 
-  if (secao === 'funcionarios') {
-    container.innerHTML = `
-      <h2>Cadastro de Funcionários</h2>
-      <input type="text" id="nomeFuncionario" placeholder="Nome do funcionário" />
-      <button class="salvar" onclick="salvarFuncionario()">Salvar</button>
-      <table><thead><tr><th>Nome</th><th>Ações</th></tr></thead><tbody>
-        ${funcionarios.sort().map((f, i) => `
-          <tr><td>${f}</td><td><button onclick="editarFuncionario(${i})">Editar</button><button onclick="excluirFuncionario(${i})">Excluir</button></td></tr>
-        `).join('')}
-      </tbody></table>
-    `;
-  } else if (secao === 'ferramentas') {
-    container.innerHTML = `
-      <h2>Cadastro de Ferramentas</h2>
-      <input type="text" id="nomeFerramenta" placeholder="Nome da ferramenta" />
-      <input type="text" id="obsFerramenta" placeholder="Observações" />
-      <input type="number" id="qtdFerramenta" placeholder="Quantidade" />
-      <button class="salvar" onclick="salvarFerramentas()">Salvar</button>
-      <table><thead><tr><th>Nome</th><th>Número</th><th>Observações</th><th>Ações</th></tr></thead><tbody>
-        ${ferramentas.map((f, i) => `
-          <tr><td>${f.nome}</td><td>${f.numero}</td><td>${f.obs}</td><td><button onclick="editarFerramenta(${i})">Editar</button><button onclick="excluirFerramenta(${i})">Excluir</button></td></tr>
-        `).join('')}
-      </tbody></table>
-    `;
-  } else if (secao === 'emprestimos') {
-    const usuarios = funcionarios.sort();
-    const disponiveis = ferramentas.filter(f => !emprestimos.find(e => e.ferramenta === `${f.nome} - ${f.numero}`));
-    container.innerHTML = `
-      <h2>Registrar Empréstimo</h2>
-      <select id="usuarioEmprestimo">
-        ${usuarios.map(u => `<option>${u}</option>`).join('')}
-      </select>
-      <select id="ferramentasEmprestimo" multiple>
-        ${disponiveis.map(f => `<option>${f.nome} - ${f.numero}</option>`).join('')}
-      </select>
-      <input type="date" id="dataEmprestimo" value="${hoje}" />
-      <button class="salvar" onclick="salvarEmprestimo()">Salvar</button>
-      <table><thead><tr><th>Usuário</th><th>Ferramenta</th><th>Data</th></tr></thead><tbody>
-        ${emprestimos.map(e => `<tr><td>${e.usuario}</td><td>${e.ferramenta}</td><td>${e.data}</td></tr>`).join('')}
-      </tbody></table>
-    `;
-  } else if (secao === 'devolucoes') {
-    const usuariosPendentes = [...new Set(emprestimos.map(e => e.usuario))].sort();
-    container.innerHTML = `
-      <h2>Registrar Devolução</h2>
-      <select id="usuarioDevolucao" onchange="carregarFerramentasUsuario()">
-        ${usuariosPendentes.map(u => `<option>${u}</option>`).join('')}
-      </select>
-      <select id="ferramentasDevolucao" multiple></select>
-      <input type="date" id="dataDevolucao" value="${hoje}" />
-      <button class="salvar" onclick="salvarDevolucao()">Salvar</button>
-      <table><thead><tr><th>Usuário</th><th>Ferramenta</th><th>Data</th></tr></thead><tbody>
-        ${emprestimos.map(e => `<tr><td>${e.usuario}</td><td>${e.ferramenta}</td><td>${e.data}</td></tr>`).join('')}
-      </tbody></table>
-    `;
-    setTimeout(carregarFerramentasUsuario, 100);
-  } else if (secao === 'relatorios') {
-    const relatorioFerramentas = emprestimos.map(e => `<li>${e.ferramenta} - ${e.usuario} (${e.data})</li>`).join('');
-    const relatorioUsuarios = [...new Set(emprestimos.map(e => e.usuario))]
-      .map(u => `<li>${u}: ${emprestimos.filter(e => e.usuario === u).map(e => e.ferramenta).join(', ')}</li>`).join('');
-    container.innerHTML = `
-      <h2>Relatórios</h2>
-      <h3>Ferramentas Pendentes</h3><ul>${relatorioFerramentas}</ul>
-      <h3>Usuários Pendentes</h3><ul>${relatorioUsuarios}</ul>
-    `;
+const baseURL = 'https://api.github.com/repos/' + repo + '/contents/data/';
+
+const textos = {
+  pt: {
+    funcionarios: 'Funcionários',
+    cadastroFuncionarios: 'Cadastro de Funcionários',
+    nomeFuncionario: 'Nome do funcionário',
+    salvar: 'Salvar',
+    editar: 'Editar',
+    excluir: 'Excluir',
+    ferramentas: 'Ferramentas',
+    cadastroFerramentas: 'Cadastro de Ferramentas',
+    nomeFerramenta: 'Nome da ferramenta',
+    observacoes: 'Observações',
+    quantidade: 'Quantidade',
+    emprestimos: 'Empréstimos',
+    registrarEmprestimo: 'Registrar Empréstimo',
+    usuario: 'Usuário',
+    devolucoes: 'Devoluções',
+    registrarDevolucao: 'Registrar Devolução',
+    data: 'Data',
+    relatorios: 'Relatórios',
+    ferramentasPendentes: 'Ferramentas Pendentes',
+    usuariosPendentes: 'Usuários Pendentes'
+  },
+  es: {
+    funcionarios: 'Empleados',
+    cadastroFuncionarios: 'Registro de Empleados',
+    nomeFuncionario: 'Nombre del empleado',
+    salvar: 'Guardar',
+    editar: 'Editar',
+    excluir: 'Eliminar',
+    ferramentas: 'Herramientas',
+    cadastroFerramentas: 'Registro de Herramientas',
+    nomeFerramenta: 'Nombre de la herramienta',
+    observacoes: 'Observaciones',
+    quantidade: 'Cantidad',
+    emprestimos: 'Préstamos',
+    registrarEmprestimo: 'Registrar Préstamo',
+    usuario: 'Usuario',
+    devolucoes: 'Devoluciones',
+    registrarDevolucao: 'Registrar Devolución',
+    data: 'Fecha',
+    relatorios: 'Informes',
+    ferramentasPendentes: 'Herramientas Pendientes',
+    usuariosPendentes: 'Usuarios Pendientes'
   }
+};
+
+function traduzir(chave) {
+  return textos[idiomaAtual][chave] || chave;
+}
+
+function trocarIdioma(novoIdioma) {
+  idiomaAtual = novoIdioma;
+  mostrarSecao('funcionarios');
+}
+
+async function salvarGitHub(arquivo, dados) {
+  const url = `${baseURL}${arquivo}.json`;
+  const content = btoa(unescape(encodeURIComponent(JSON.stringify(dados, null, 2))));
+
+  try {
+    const res = await fetch(url, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    const { sha } = await res.json();
+
+    await fetch(url, {
+      method: 'PUT',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        message: `Atualiza ${arquivo}`,
+        content,
+        sha
+      })
+    });
+  } catch (err) {
+    console.error('Erro ao salvar no GitHub:', err);
+  }
+}
+
+async function carregarGitHub(arquivo) {
+  const url = `${baseURL}${arquivo}.json`;
+  try {
+    const res = await fetch(url, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    const data = await res.json();
+    return JSON.parse(decodeURIComponent(escape(atob(data.content))));
+  } catch (err) {
+    console.error('Erro ao carregar do GitHub:', err);
+    return [];
+  }
+}
+
+async function inicializarSistema() {
+  funcionarios.push(...await carregarGitHub('funcionarios'));
+  ferramentas.push(...await carregarGitHub('ferramentas'));
+  emprestimos.push(...await carregarGitHub('emprestimos'));
+  mostrarSecao('funcionarios');
 }
 
 function salvarFuncionario() {
   const nome = document.getElementById('nomeFuncionario').value.trim();
   if (nome) funcionarios.push(nome);
-  mostrarSecao('funcionarios');
-}
-
-function editarFuncionario(index) {
-  const novoNome = prompt('Editar nome:', funcionarios[index]);
-  if (novoNome) funcionarios[index] = novoNome;
-  mostrarSecao('funcionarios');
-}
-
-function excluirFuncionario(index) {
-  funcionarios.splice(index, 1);
+  salvarGitHub('funcionarios', funcionarios);
   mostrarSecao('funcionarios');
 }
 
@@ -103,19 +131,7 @@ function salvarFerramentas() {
     contadorFerramentas[nome]++;
     ferramentas.push({ nome, numero: contadorFerramentas[nome], obs });
   }
-  mostrarSecao('ferramentas');
-}
-
-function editarFerramenta(index) {
-  const novoNome = prompt('Editar nome:', ferramentas[index].nome);
-  const novaObs = prompt('Editar observações:', ferramentas[index].obs);
-  if (novoNome) ferramentas[index].nome = novoNome;
-  if (novaObs !== null) ferramentas[index].obs = novaObs;
-  mostrarSecao('ferramentas');
-}
-
-function excluirFerramenta(index) {
-  ferramentas.splice(index, 1);
+  salvarGitHub('ferramentas', ferramentas);
   mostrarSecao('ferramentas');
 }
 
@@ -124,14 +140,8 @@ function salvarEmprestimo() {
   const data = document.getElementById('dataEmprestimo').value;
   const selecionadas = Array.from(document.getElementById('ferramentasEmprestimo').selectedOptions).map(o => o.value);
   selecionadas.forEach(ferramenta => emprestimos.push({ usuario, ferramenta, data }));
+  salvarGitHub('emprestimos', emprestimos);
   mostrarSecao('emprestimos');
-}
-
-function carregarFerramentasUsuario() {
-  const usuario = document.getElementById('usuarioDevolucao').value;
-  const select = document.getElementById('ferramentasDevolucao');
-  const ferramentasUsuario = emprestimos.filter(e => e.usuario === usuario).map(e => e.ferramenta);
-  select.innerHTML = ferramentasUsuario.map(f => `<option>${f}</option>`).join('');
 }
 
 function salvarDevolucao() {
@@ -142,10 +152,8 @@ function salvarDevolucao() {
       emprestimos.splice(i, 1);
     }
   }
+  salvarGitHub('emprestimos', emprestimos);
   mostrarSecao('devolucoes');
 }
 
-mostrarSecao('funcionarios');
-
-
-
+inicializarSistema();

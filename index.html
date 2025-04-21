@@ -5,44 +5,26 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Sistema de Controle de Ferramentas</title>
   <link rel="stylesheet" href="style.css" />
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-  <script>
-    function alternarTema() {
-      const body = document.body;
-      const btn = document.getElementById('btn-tema');
-      body.classList.toggle('dark-theme');
-  
-      if (body.classList.contains('dark-theme')) {
-        btn.textContent = '☀️ Tema Claro';
-      } else {
-        btn.textContent = '🌙 Tema Escuro';
-      }
-  
-      localStorage.setItem('tema', body.classList.contains('dark-theme') ? 'escuro' : 'claro');
-    }
-  
-    window.addEventListener('DOMContentLoaded', () => {
-      const temaSalvo = localStorage.getItem('tema');
-      if (temaSalvo === 'escuro') {
-        document.body.classList.add('dark-theme');
-        const btn = document.getElementById('btn-tema');
-        if (btn) btn.textContent = '☀️ Tema Claro';
-      }
-    });
-  </script>
-  
-</head>
+  <script defer src="script.js"></script>
 </head>
 <body>
-  
   <h1>Sistema de Controle de Ferramentas</h1>
+
+  <div style="text-align: center; margin-bottom: 15px;">
+    <label for="tokenInput">🔐 GitHub Token:</label>
+    <input type="password" id="tokenInput" placeholder="Informe seu token" style="width: 300px; padding: 5px;" />
+    <button onclick="salvarToken()">Salvar Token</button>
+  </div>
+
   <div style="text-align: center; margin-bottom: 15px;">
     <button onclick="alternarTema()" id="btn-tema">🌙 Alternar Tema</button>
   </div>
-  <div style="text-align: center; margin-bottom: 10px;">
+
+  <div style="text-align: center; margin-bottom: 15px;">
     <button onclick="trocarIdioma('pt')">🇧🇷 Português</button>
     <button onclick="trocarIdioma('es')">🇪🇸 Español</button>
   </div>
+
   <nav>
     <button onclick="mostrarSecao('funcionarios')">Funcionários</button>
     <button onclick="mostrarSecao('ferramentas')">Ferramentas</button>
@@ -51,6 +33,86 @@
     <button onclick="mostrarSecao('relatorios')">Relatórios</button>
   </nav>
   <div id="conteudo"></div>
-  <script src="script.js"></script>
+
+  <script>
+    const idiomas = {
+      pt: {
+        funcionarios: "Funcionários",
+        ferramentas: "Ferramentas",
+        emprestimos: "Empréstimos",
+        devolucoes: "Devoluções",
+        relatorios: "Relatórios",
+        tokenLabel: "🔐 GitHub Token:",
+        salvarToken: "Salvar Token",
+        tema: "🌙 Alternar Tema"
+      },
+      es: {
+        funcionarios: "Empleados",
+        ferramentas: "Herramientas",
+        emprestimos: "Préstamos",
+        devolucoes: "Devoluciones",
+        relatorios: "Informes",
+        tokenLabel: "🔐 Token de GitHub:",
+        salvarToken: "Guardar Token",
+        tema: "🌙 Cambiar Tema"
+      }
+    };
+
+    let idiomaAtual = "pt";
+
+    function trocarIdioma(idioma) {
+      idiomaAtual = idioma;
+      const t = idiomas[idioma];
+
+      document.querySelector("nav button:nth-child(1)").textContent = t.funcionarios;
+      document.querySelector("nav button:nth-child(2)").textContent = t.ferramentas;
+      document.querySelector("nav button:nth-child(3)").textContent = t.emprestimos;
+      document.querySelector("nav button:nth-child(4)").textContent = t.devolucoes;
+      document.querySelector("nav button:nth-child(5)").textContent = t.relatorios;
+      document.getElementById("btn-tema").textContent = t.tema;
+      document.querySelector("label[for='tokenInput']").textContent = t.tokenLabel;
+      document.querySelector("button[onclick='salvarToken()']").textContent = t.salvarToken;
+      localStorage.setItem('idioma', idioma);
+    }
+
+    function alternarTema() {
+      const body = document.body;
+      const btn = document.getElementById('btn-tema');
+      body.classList.toggle('dark-theme');
+      btn.textContent = body.classList.contains('dark-theme') ? '☀️ Tema Claro' : '🌙 Tema Escuro';
+      localStorage.setItem('tema', body.classList.contains('dark-theme') ? 'escuro' : 'claro');
+    }
+
+    function salvarToken() {
+      const token = document.getElementById('tokenInput').value.trim();
+      if (token) {
+        localStorage.setItem('githubToken', token);
+        alert('Token salvo localmente. A sincronização está habilitada.');
+      } else {
+        alert('Por favor, insira um token válido.');
+      }
+    }
+
+    function obterTokenGitHub() {
+      return localStorage.getItem('githubToken') || '';
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      const temaSalvo = localStorage.getItem('tema');
+      if (temaSalvo === 'escuro') {
+        document.body.classList.add('dark-theme');
+        const btn = document.getElementById('btn-tema');
+        if (btn) btn.textContent = '☀️ Tema Claro';
+      }
+
+      const tokenSalvo = localStorage.getItem('githubToken');
+      if (tokenSalvo) {
+        document.getElementById('tokenInput').value = tokenSalvo;
+      }
+
+      const idiomaSalvo = localStorage.getItem('idioma') || 'pt';
+      trocarIdioma(idiomaSalvo);
+    });
+  </script>
 </body>
 </html>
