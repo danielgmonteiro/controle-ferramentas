@@ -1,0 +1,14 @@
+[
+  {
+    "id": 1,
+    "nome": "Martelo",
+    "numero": 1,
+    "observacoes": "Bom estado"
+  },
+  {
+    "id": 2,
+    "nome": "Chave de fenda",
+    "numero": 1,
+    "observacoes": "Sem observa\u00e7\u00f5es"
+  }
+]
