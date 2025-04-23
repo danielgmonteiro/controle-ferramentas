@@ -1,0 +1,204 @@
+:root {
+    --primary-color: #4285f4;
+    --primary-hover: #3367d6;
+    --danger-color: #ea4335;
+    --danger-hover: #d33426;
+    --success-color: #34a853;
+    --success-hover: #2d9248;
+    --warning-color: #fbbc05;
+    --warning-hover: #e6ac00;
+    --bg-color: #ffffff;
+    --text-color: #202124;
+    --card-bg: #f8f9fa;
+    --border-color: #dadce0;
+    --shadow-color: rgba(0, 0, 0, 0.1);
+  }
+  
+  .dark-mode {
+    --primary-color: #8ab4f8;
+    --primary-hover: #7aa3e6;
+    --danger-color: #f28b82;
+    --danger-hover: #e67c73;
+    --success-color: #81c995;
+    --success-hover: #72b586;
+    --warning-color: #fde293;
+    --warning-hover: #ecd383;
+    --bg-color: #202124;
+    --text-color: #e8eaed;
+    --card-bg: #292a2d;
+    --border-color: #3c4043;
+    --shadow-color: rgba(0, 0, 0, 0.3);
+  }
+  
+  body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    margin: 0;
+    padding: 20px;
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    transition: all 0.3s ease;
+  }
+  
+  .container {
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+  
+  .header-controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 15px;
+    margin-bottom: 20px;
+    padding: 15px;
+    background-color: var(--card-bg);
+    border-radius: 8px;
+    box-shadow: 0 2px 5px var(--shadow-color);
+  }
+  
+  .github-config {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+  
+  .github-config input {
+    padding: 8px 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    min-width: 200px;
+  }
+  
+  h1 {
+    text-align: center;
+    margin: 20px 0;
+    color: var(--text-color);
+  }
+  
+  nav {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 30px;
+  }
+  
+  nav button {
+    background-color: var(--primary-color);
+    color: white;
+    border: none;
+    padding: 12px 20px;
+    font-size: 1rem;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+  }
+  
+  nav button:hover {
+    background-color: var(--primary-hover);
+  }
+  
+  .content-box {
+    background-color: var(--card-bg);
+    padding: 25px;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px var(--shadow-color);
+    min-height: 400px;
+  }
+  
+  button {
+    padding: 10px 15px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: all 0.2s;
+  }
+  
+  button:hover {
+    transform: translateY(-2px);
+  }
+  
+  button:active {
+    transform: translateY(0);
+  }
+  
+  .theme-toggle {
+    background-color: var(--warning-color);
+    color: #000;
+  }
+  
+  .theme-toggle:hover {
+    background-color: var(--warning-hover);
+  }
+  
+  .language-toggle {
+    background-color: var(--primary-color);
+    color: white;
+  }
+  
+  .language-toggle:hover {
+    background-color: var(--primary-hover);
+  }
+  
+  .sync-button {
+    background-color: var(--success-color);
+    color: white;
+  }
+  
+  .sync-button:hover {
+    background-color: var(--success-hover);
+  }
+  
+  .action-button {
+    background-color: var(--primary-color);
+    color: white;
+    padding: 8px 12px;
+    margin-right: 5px;
+  }
+  
+  .delete-button {
+    background-color: var(--danger-color);
+  }
+  
+  .delete-button:hover {
+    background-color: var(--danger-hover);
+  }
+  
+  .sync-status {
+    margin-top: 20px;
+    padding: 10px;
+    text-align: center;
+    font-size: 0.9em;
+    color: var(--text-color);
+  }
+  
+  /* Responsividade */
+  @media (max-width: 768px) {
+    .header-controls {
+      flex-direction: column;
+      align-items: stretch;
+    }
+    
+    nav {
+      flex-direction: column;
+      align-items: stretch;
+    }
+    
+    nav button {
+      width: 100%;
+    }
+    
+    .github-config {
+      flex-direction: column;
+      align-items: stretch;
+    }
+    
+    .github-config input {
+      width: 100%;
+    }
+  }
