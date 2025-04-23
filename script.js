@@ -3,233 +3,287 @@ let funcionarios = [];
 let ferramentas = [];
 let emprestimos = [];
 let contadorFerramentas = {};
-let darkMode = false;
-let portuguese = true;
 
-// Elementos DOM
-const conteudoEl = document.getElementById('conteudo');
-const githubTokenEl = document.getElementById('githubToken');
-const repoNameEl = document.getElementById('repoName');
-const syncStatusEl = document.getElementById('syncStatus');
-
-// Traduções
-const translations = {
-  pt: {
-    title: "Sistema de Controle de Ferramentas",
-    theme: "🌓 Tema",
-    language: "🌐 Idioma",
-    sections: {
-      funcionarios: "Funcionários",
-      ferramentas: "Ferramentas",
-      emprestimos: "Empréstimos",
-      devolucoes: "Devoluções",
-      relatorios: "Relatórios"
-    },
-    funcionarios: {
-      title: "Cadastro de Funcionários",
-      placeholder: "Nome do funcionário",
-      save: "Salvar",
-      actions: "Ações",
-      edit: "Editar",
-      delete: "Excluir",
-      noData: "Nenhum funcionário cadastrado"
-    },
-    ferramentas: {
-      title: "Cadastro de Ferramentas",
-      namePlaceholder: "Nome da ferramenta",
-      obsPlaceholder: "Observações",
-      qtdPlaceholder: "Quantidade",
-      save: "Salvar",
-      number: "Número",
-      observations: "Observações",
-      actions: "Ações",
-      edit: "Editar",
-      delete: "Excluir",
-      noData: "Nenhuma ferramenta cadastrada"
-    },
-    emprestimos: {
-      title: "Registrar Empréstimo",
-      user: "Usuário",
-      searchUser: "Buscar usuário...",
-      tools: "Ferramentas",
-      date: "Data",
-      save: "Salvar",
-      noData: "Nenhum empréstimo registrado",
-      availableTools: "Ferramentas disponíveis"
-    },
-    devolucoes: {
-      title: "Registrar Devolução",
-      user: "Usuário",
-      tools: "Ferramentas pendentes",
-      date: "Data",
-      save: "Salvar",
-      noData: "Nenhuma ferramenta pendente",
-      pendingTools: "Ferramentas pendentes"
-    },
-    relatorios: {
-      title: "Relatórios",
-      pendingTools: "Ferramentas Pendentes",
-      pendingUsers: "Usuários Pendentes",
-      noPendingTools: "Nenhuma ferramenta pendente",
-      noPendingUsers: "Nenhum usuário pendente"
-    }
-  },
-  es: {
-    title: "Sistema de Control de Herramientas",
-    theme: "🌓 Tema",
-    language: "🌐 Idioma",
-    sections: {
-      funcionarios: "Empleados",
-      ferramentas: "Herramientas",
-      emprestimos: "Préstamos",
-      devolucoes: "Devoluciones",
-      relatorios: "Informes"
-    },
-    funcionarios: {
-      title: "Registro de Empleados",
-      placeholder: "Nombre del empleado",
-      save: "Guardar",
-      actions: "Acciones",
-      edit: "Editar",
-      delete: "Eliminar",
-      noData: "No hay empleados registrados"
-    },
-    ferramentas: {
-      title: "Registro de Herramientas",
-      namePlaceholder: "Nombre de la herramienta",
-      obsPlaceholder: "Observaciones",
-      qtdPlaceholder: "Cantidad",
-      save: "Guardar",
-      number: "Número",
-      observations: "Observaciones",
-      actions: "Acciones",
-      edit: "Editar",
-      delete: "Eliminar",
-      noData: "No hay herramientas registradas"
-    },
-    emprestimos: {
-      title: "Registrar Préstamo",
-      user: "Usuario",
-      searchUser: "Buscar usuario...",
-      tools: "Herramientas",
-      date: "Fecha",
-      save: "Guardar",
-      noData: "No hay préstamos registrados",
-      availableTools: "Herramientas disponibles"
-    },
-    devolucoes: {
-      title: "Registrar Devolución",
-      user: "Usuario",
-      tools: "Herramientas pendientes",
-      date: "Fecha",
-      save: "Guardar",
-      noData: "No hay herramientas pendientes",
-      pendingTools: "Herramientas pendientes"
-    },
-    relatorios: {
-      title: "Informes",
-      pendingTools: "Herramientas Pendientes",
-      pendingUsers: "Usuarios Pendientes",
-      noPendingTools: "No hay herramientas pendientes",
-      noPendingUsers: "No hay usuarios pendientes"
-    }
-  }
+// Configurações
+let config = {
+  githubToken: '',
+  repoName: '',
+  darkMode: false,
+  portuguese: true,
+  lastSync: null
 };
 
 // Inicialização
-document.addEventListener('DOMContentLoaded', () => {
-  carregarDados();
-  aplicarTema();
-  atualizarIdioma();
+document.addEventListener('DOMContentLoaded', async () => {
+  await loadConfig();
+  await loadData();
+  applyTheme();
+  updateLanguage();
   mostrarSecao('funcionarios');
 });
 
-// Carregar dados do localStorage
-function carregarDados() {
-  const dadosFuncionarios = localStorage.getItem('funcionarios');
-  const dadosFerramentas = localStorage.getItem('ferramentas');
-  const dadosEmprestimos = localStorage.getItem('emprestimos');
-  const dadosContador = localStorage.getItem('contadorFerramentas');
-  const dadosTema = localStorage.getItem('darkMode');
-  const dadosIdioma = localStorage.getItem('portuguese');
-
-  if (dadosFuncionarios) funcionarios = JSON.parse(dadosFuncionarios);
-  if (dadosFerramentas) ferramentas = JSON.parse(dadosFerramentas);
-  if (dadosEmprestimos) emprestimos = JSON.parse(dadosEmprestimos);
-  if (dadosContador) contadorFerramentas = JSON.parse(dadosContador);
-  if (dadosTema) darkMode = dadosTema === 'true';
-  if (dadosIdioma) portuguese = dadosIdioma === 'true';
-  
-  if (darkMode) document.body.classList.add('dark-mode');
+// Carregar configurações
+async function loadConfig() {
+  const savedConfig = localStorage.getItem('ferramentasConfig');
+  if (savedConfig) {
+    config = JSON.parse(savedConfig);
+    document.getElementById('githubToken').value = config.githubToken || '';
+    document.getElementById('repoName').value = config.repoName || '';
+  }
 }
 
-// Salvar dados no localStorage
-function salvarDados() {
-  localStorage.setItem('funcionarios', JSON.stringify(funcionarios));
-  localStorage.setItem('ferramentas', JSON.stringify(ferramentas));
-  localStorage.setItem('emprestimos', JSON.stringify(emprestimos));
-  localStorage.setItem('contadorFerramentas', JSON.stringify(contadorFerramentas));
-  localStorage.setItem('darkMode', darkMode);
-  localStorage.setItem('portuguese', portuguese);
+// Salvar configurações do GitHub
+async function saveGithubConfig() {
+  config.githubToken = document.getElementById('githubToken').value.trim();
+  config.repoName = document.getElementById('repoName').value.trim();
+  
+  if (!config.githubToken || !config.repoName) {
+    showMessage('Token e repositório são obrigatórios', 'error');
+    return;
+  }
+  
+  localStorage.setItem('ferramentasConfig', JSON.stringify(config));
+  showMessage('Configurações salvas com sucesso!', 'success');
 }
 
 // Alternar tema
 function toggleTheme() {
-  darkMode = !darkMode;
-  document.body.classList.toggle('dark-mode', darkMode);
-  salvarDados();
+  config.darkMode = !config.darkMode;
+  localStorage.setItem('ferramentasConfig', JSON.stringify(config));
+  applyTheme();
 }
 
-function aplicarTema() {
-  if (darkMode) {
-    document.body.classList.add('dark-mode');
-  } else {
-    document.body.classList.remove('dark-mode');
-  }
+function applyTheme() {
+  document.body.classList.toggle('dark-mode', config.darkMode);
 }
 
 // Alternar idioma
 function toggleLanguage() {
-  portuguese = !portuguese;
-  atualizarIdioma();
-  salvarDados();
-  const secaoAtual = conteudoEl.getAttribute('data-section') || 'funcionarios';
-  mostrarSecao(secaoAtual);
+  config.portuguese = !config.portuguese;
+  localStorage.setItem('ferramentasConfig', JSON.stringify(config));
+  updateLanguage();
+  mostrarSecao(document.getElementById('conteudo').getAttribute('data-section') || 'funcionarios');
 }
 
-function atualizarIdioma() {
-  const lang = portuguese ? 'pt' : 'es';
-  document.getElementById('main-title').textContent = translations[lang].title;
-  document.querySelector('.theme-toggle').textContent = translations[lang].theme;
-  document.querySelector('.language-toggle').textContent = translations[lang].language;
+function updateLanguage() {
+  const lang = config.portuguese ? 'pt' : 'es';
+  const texts = {
+    pt: {
+      title: "Sistema de Controle de Ferramentas",
+      funcionarios: "Funcionários",
+      ferramentas: "Ferramentas",
+      emprestimos: "Empréstimos",
+      devolucoes: "Devoluções",
+      relatorios: "Relatórios",
+      configTitle: "Configuração do GitHub",
+      saveConfig: "Salvar Configuração"
+    },
+    es: {
+      title: "Sistema de Control de Herramientas",
+      funcionarios: "Empleados",
+      ferramentas: "Herramientas",
+      emprestimos: "Préstamos",
+      devolucoes: "Devoluciones",
+      relatorios: "Informes",
+      configTitle: "Configuración de GitHub",
+      saveConfig: "Guardar Configuración"
+    }
+  };
   
-  // Atualizar botões de navegação
-  for (const [key, value] of Object.entries(translations[lang].sections)) {
-    const btn = document.getElementById(`btn-${key}`);
-    if (btn) btn.textContent = value;
+  const t = texts[lang];
+  document.getElementById('main-title').textContent = t.title;
+  document.getElementById('btn-funcionarios').textContent = t.funcionarios;
+  document.getElementById('btn-ferramentas').textContent = t.ferramentas;
+  document.getElementById('btn-emprestimos').textContent = t.emprestimos;
+  document.getElementById('btn-devolucoes').textContent = t.devolucoes;
+  document.getElementById('btn-relatorios').textContent = t.relatorios;
+  document.querySelector('.github-config h3').textContent = t.configTitle;
+  document.querySelector('.github-config button').textContent = t.saveConfig;
+}
+
+// Carregar dados
+async function loadData() {
+  try {
+    // Tenta carregar do GitHub se configurado
+    if (config.githubToken && config.repoName) {
+      await fetchDataFromGitHub();
+      return;
+    }
+    
+    // Se não, carrega do localStorage
+    const localData = localStorage.getItem('ferramentasData');
+    if (localData) {
+      const data = JSON.parse(localData);
+      funcionarios = data.funcionarios || [];
+      ferramentas = data.ferramentas || [];
+      emprestimos = data.emprestimos || [];
+      contadorFerramentas = data.contadorFerramentas || {};
+    }
+  } catch (error) {
+    console.error('Erro ao carregar dados:', error);
+    showMessage('Erro ao carregar dados', 'error');
   }
 }
 
-// Mostrar seção
+// Salvar dados
+async function saveData() {
+  const data = {
+    funcionarios,
+    ferramentas,
+    emprestimos,
+    contadorFerramentas,
+    updatedAt: new Date().toISOString()
+  };
+  
+  // Salva localmente
+  localStorage.setItem('ferramentasData', JSON.stringify(data));
+  
+  // Tenta sincronizar com GitHub se configurado
+  if (config.githubToken && config.repoName) {
+    try {
+      await pushDataToGitHub();
+      config.lastSync = new Date().toISOString();
+      localStorage.setItem('ferramentasConfig', JSON.stringify(config));
+    } catch (error) {
+      console.error('Erro ao sincronizar com GitHub:', error);
+      throw error;
+    }
+  }
+}
+
+// Sincronizar com GitHub
+async function syncData() {
+  try {
+    showMessage('Sincronizando...');
+    await fetchDataFromGitHub();
+    await pushDataToGitHub();
+    showMessage('Sincronização completa!', 'success');
+    mostrarSecao(document.getElementById('conteudo').getAttribute('data-section') || 'funcionarios');
+  } catch (error) {
+    console.error('Erro na sincronização:', error);
+    showMessage(`Erro: ${error.message}`, 'error');
+  }
+}
+
+// Buscar dados do GitHub
+async function fetchDataFromGitHub() {
+  if (!config.githubToken || !config.repoName) {
+    throw new Error('Configuração do GitHub não definida');
+  }
+  
+  const url = `https://api.github.com/repos/${config.repoName}/contents/data.json`;
+  const response = await fetch(url, {
+    headers: {
+      'Authorization': `token ${config.githubToken}`,
+      'Accept': 'application/vnd.github.v3+json'
+    }
+  });
+  
+  if (!response.ok) throw new Error(`Erro ao buscar dados: ${response.status}`);
+  
+  const result = await response.json();
+  const content = atob(result.content.replace(/\s/g, ''));
+  const data = JSON.parse(content);
+  
+  funcionarios = data.funcionarios || [];
+  ferramentas = data.ferramentas || [];
+  emprestimos = data.emprestimos || [];
+  contadorFerramentas = data.contadorFerramentas || {};
+  
+  config.lastSync = new Date().toISOString();
+  localStorage.setItem('ferramentasConfig', JSON.stringify(config));
+}
+
+// Enviar dados para o GitHub
+async function pushDataToGitHub() {
+  if (!config.githubToken || !config.repoName) {
+    throw new Error('Configuração do GitHub não definida');
+  }
+  
+  // Verifica se o arquivo já existe
+  let sha = '';
+  try {
+    const checkUrl = `https://api.github.com/repos/${config.repoName}/contents/data.json`;
+    const checkResponse = await fetch(checkUrl, {
+      headers: {
+        'Authorization': `token ${config.githubToken}`,
+        'Accept': 'application/vnd.github.v3+json'
+      }
+    });
+    
+    if (checkResponse.ok) {
+      const fileData = await checkResponse.json();
+      sha = fileData.sha;
+    }
+  } catch (error) {
+    console.log('Arquivo não existe, será criado novo');
+  }
+  
+  // Prepara os dados
+  const data = {
+    funcionarios,
+    ferramentas,
+    emprestimos,
+    contadorFerramentas,
+    updatedAt: new Date().toISOString()
+  };
+  
+  const content = JSON.stringify(data, null, 2);
+  const base64Content = btoa(unescape(encodeURIComponent(content)));
+  
+  // Envia para o GitHub
+  const url = `https://api.github.com/repos/${config.repoName}/contents/data.json`;
+  const response = await fetch(url, {
+    method: 'PUT',
+    headers: {
+      'Authorization': `token ${config.githubToken}`,
+      'Accept': 'application/vnd.github.v3+json',
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      message: 'Atualização automática do sistema',
+      content: base64Content,
+      sha: sha || undefined
+    })
+  });
+  
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.message || 'Erro ao enviar dados');
+  }
+  
+  config.lastSync = new Date().toISOString();
+  localStorage.setItem('ferramentasConfig', JSON.stringify(config));
+}
+
+// Mostrar mensagens
+function showMessage(message, type = 'info') {
+  const syncStatusEl = document.getElementById('syncStatus');
+  syncStatusEl.textContent = message;
+  syncStatusEl.style.color = 
+    type === 'error' ? 'var(--danger-color)' :
+    type === 'success' ? 'var(--success-color)' :
+    'var(--text-color)';
+}
+
+// Mostrar seções
 function mostrarSecao(secao) {
   const hoje = new Date().toISOString().split('T')[0];
-  const lang = portuguese ? 'pt' : 'es';
-  const t = translations[lang];
-
+  const conteudoEl = document.getElementById('conteudo');
   conteudoEl.setAttribute('data-section', secao);
-
+  
   if (secao === 'funcionarios') {
     conteudoEl.innerHTML = `
-      <h2>${t.funcionarios.title}</h2>
+      <h2>Funcionários</h2>
       <form onsubmit="event.preventDefault(); salvarFuncionario()">
-        <input type="text" id="nomeFuncionario" placeholder="${t.funcionarios.placeholder}" required>
-        <button type="submit">${t.funcionarios.save}</button>
+        <input type="text" id="nomeFuncionario" placeholder="Nome do funcionário" required>
+        <button type="submit">Salvar</button>
       </form>
       <table>
         <thead>
           <tr>
-            <th>${t.funcionarios.placeholder}</th>
-            <th>${t.funcionarios.actions}</th>
+            <th>Nome</th>
+            <th>Ações</th>
           </tr>
         </thead>
         <tbody>
@@ -238,13 +292,13 @@ function mostrarSecao(secao) {
               <tr>
                 <td>${f}</td>
                 <td>
-                  <button class="action-button" onclick="editarFuncionario(${i})">${t.funcionarios.edit}</button>
-                  <button class="action-button delete-button" onclick="excluirFuncionario(${i})">${t.funcionarios.delete}</button>
+                  <button class="action-button" onclick="editarFuncionario(${i})">Editar</button>
+                  <button class="delete-button" onclick="excluirFuncionario(${i})">Excluir</button>
                 </td>
               </tr>
             `).join('') : `
             <tr>
-              <td colspan="2">${t.funcionarios.noData}</td>
+              <td colspan="2">Nenhum funcionário cadastrado</td>
             </tr>
           `}
         </tbody>
@@ -253,28 +307,28 @@ function mostrarSecao(secao) {
   }
   else if (secao === 'ferramentas') {
     conteudoEl.innerHTML = `
-      <h2>${t.ferramentas.title}</h2>
+      <h2>Ferramentas</h2>
       <form onsubmit="event.preventDefault(); salvarFerramenta()">
         <div class="form-row">
           <div class="form-group">
-            <input type="text" id="nomeFerramenta" placeholder="${t.ferramentas.namePlaceholder}" required>
+            <input type="text" id="nomeFerramenta" placeholder="Nome da ferramenta" required>
           </div>
           <div class="form-group">
-            <input type="text" id="obsFerramenta" placeholder="${t.ferramentas.obsPlaceholder}">
+            <input type="text" id="obsFerramenta" placeholder="Observações">
           </div>
           <div class="form-group">
-            <input type="number" id="qtdFerramenta" placeholder="${t.ferramentas.qtdPlaceholder}" min="1" value="1">
+            <input type="number" id="qtdFerramenta" placeholder="Quantidade" min="1" value="1">
           </div>
         </div>
-        <button type="submit">${t.ferramentas.save}</button>
+        <button type="submit">Salvar</button>
       </form>
       <table>
         <thead>
           <tr>
-            <th>${t.ferramentas.namePlaceholder}</th>
-            <th>${t.ferramentas.number}</th>
-            <th>${t.ferramentas.observations}</th>
-            <th>${t.ferramentas.actions}</th>
+            <th>Nome</th>
+            <th>Número</th>
+            <th>Observações</th>
+            <th>Ações</th>
           </tr>
         </thead>
         <tbody>
@@ -285,13 +339,13 @@ function mostrarSecao(secao) {
                 <td>${f.numero}</td>
                 <td>${f.obs || '-'}</td>
                 <td>
-                  <button class="action-button" onclick="editarFerramenta(${i})">${t.ferramentas.edit}</button>
-                  <button class="action-button delete-button" onclick="excluirFerramenta(${i})">${t.ferramentas.delete}</button>
+                  <button class="action-button" onclick="editarFerramenta(${i})">Editar</button>
+                  <button class="delete-button" onclick="excluirFerramenta(${i})">Excluir</button>
                 </td>
               </tr>
             `).join('') : `
             <tr>
-              <td colspan="4">${t.ferramentas.noData}</td>
+              <td colspan="4">Nenhuma ferramenta cadastrada</td>
             </tr>
           `}
         </tbody>
@@ -301,38 +355,39 @@ function mostrarSecao(secao) {
   else if (secao === 'emprestimos') {
     const usuarios = [...funcionarios].sort((a, b) => a.localeCompare(b));
     const disponiveis = ferramentas
-      .filter(f => !emprestimos.some(e => e.ferramenta === `${f.nome} - ${f.numero}`))
+      .filter(f => !emprestimos.some(e => e.ferramenta === `${f.nome} - ${f.numero}` && !e.devolvido))
       .sort((a, b) => a.nome.localeCompare(b.nome));
 
     conteudoEl.innerHTML = `
-      <h2>${t.emprestimos.title}</h2>
+      <h2>Empréstimos</h2>
       <form onsubmit="event.preventDefault(); salvarEmprestimo()">
         <div class="form-row">
           <div class="form-group">
-            <label>${t.emprestimos.user}</label>
+            <label>Usuário</label>
             <select id="usuarioEmprestimo" required>
               ${usuarios.map(u => `<option>${u}</option>`).join('')}
             </select>
           </div>
           <div class="form-group">
-            <label>${t.emprestimos.tools}</label>
+            <label>Ferramenta</label>
             <select id="ferramentaEmprestimo" required>
               ${disponiveis.map(f => `<option>${f.nome} - ${f.numero}</option>`).join('')}
             </select>
           </div>
           <div class="form-group">
-            <label>${t.emprestimos.date}</label>
+            <label>Data</label>
             <input type="date" id="dataEmprestimo" value="${hoje}" required>
           </div>
         </div>
-        <button type="submit">${t.emprestimos.save}</button>
+        <button type="submit">Registrar Empréstimo</button>
       </form>
       <table>
         <thead>
           <tr>
-            <th>${t.emprestimos.user}</th>
-            <th>${t.emprestimos.tools}</th>
-            <th>${t.emprestimos.date}</th>
+            <th>Usuário</th>
+            <th>Ferramenta</th>
+            <th>Data</th>
+            <th>Status</th>
           </tr>
         </thead>
         <tbody>
@@ -342,10 +397,11 @@ function mostrarSecao(secao) {
                 <td>${e.usuario}</td>
                 <td>${e.ferramenta}</td>
                 <td>${e.data}</td>
+                <td>${e.devolvido ? 'Devolvido' : 'Pendente'}</td>
               </tr>
             `).join('') : `
             <tr>
-              <td colspan="3">${t.emprestimos.noData}</td>
+              <td colspan="4">Nenhum empréstimo registrado</td>
             </tr>
           `}
         </tbody>
@@ -353,35 +409,40 @@ function mostrarSecao(secao) {
     `;
   }
   else if (secao === 'devolucoes') {
-    const usuariosPendentes = [...new Set(emprestimos.map(e => e.usuario))].sort((a, b) => a.localeCompare(b));
+    const usuariosPendentes = [...new Set(emprestimos
+      .filter(e => !e.devolvido)
+      .map(e => e.usuario))].sort((a, b) => a.localeCompare(b));
 
     conteudoEl.innerHTML = `
-      <h2>${t.devolucoes.title}</h2>
+      <h2>Devoluções</h2>
       <form onsubmit="event.preventDefault(); salvarDevolucao()">
         <div class="form-row">
           <div class="form-group">
-            <label>${t.devolucoes.user}</label>
+            <label>Usuário</label>
             <select id="usuarioDevolucao" onchange="carregarFerramentasPendentes()" required>
+              <option value="">Selecione...</option>
               ${usuariosPendentes.map(u => `<option>${u}</option>`).join('')}
             </select>
           </div>
           <div class="form-group">
-            <label>${t.devolucoes.tools}</label>
-            <select id="ferramentaDevolucao" required></select>
+            <label>Ferramenta</label>
+            <select id="ferramentaDevolucao" required disabled>
+              <option value="">Selecione um usuário</option>
+            </select>
           </div>
           <div class="form-group">
-            <label>${t.devolucoes.date}</label>
+            <label>Data Devolução</label>
             <input type="date" id="dataDevolucao" value="${hoje}" required>
           </div>
         </div>
-        <button type="submit">${t.devolucoes.save}</button>
+        <button type="submit">Registrar Devolução</button>
       </form>
-      <h3>${t.devolucoes.pendingTools}</h3>
+      <h3>Ferramentas Pendentes</h3>
       <table>
         <thead>
           <tr>
-            <th>${t.devolucoes.user}</th>
-            <th>${t.devolucoes.tools}</th>
+            <th>Usuário</th>
+            <th>Ferramenta</th>
             <th>Data Empréstimo</th>
           </tr>
         </thead>
@@ -395,25 +456,22 @@ function mostrarSecao(secao) {
               </tr>
             `).join('') : `
             <tr>
-              <td colspan="3">${t.devolucoes.noData}</td>
+              <td colspan="3">Nenhuma ferramenta pendente</td>
             </tr>
           `}
         </tbody>
       </table>
     `;
-
-    if (usuariosPendentes.length > 0) {
-      carregarFerramentasPendentes();
-    }
   }
   else if (secao === 'relatorios') {
     const pendentes = emprestimos.filter(e => !e.devolvido);
+    const usuariosComPendencia = [...new Set(pendentes.map(e => e.usuario))].sort();
     
     conteudoEl.innerHTML = `
-      <h2>${t.relatorios.title}</h2>
+      <h2>Relatórios</h2>
       
       <div class="report-section">
-        <h3>${t.relatorios.pendingTools}</h3>
+        <h3>Ferramentas Pendentes</h3>
         ${pendentes.length > 0 ? `
           <table>
             <thead>
@@ -421,24 +479,29 @@ function mostrarSecao(secao) {
                 <th>Usuário</th>
                 <th>Ferramenta</th>
                 <th>Data Empréstimo</th>
+                <th>Dias Pendentes</th>
               </tr>
             </thead>
             <tbody>
-              ${pendentes.map(e => `
-                <tr>
-                  <td>${e.usuario}</td>
-                  <td>${e.ferramenta}</td>
-                  <td>${e.data}</td>
-                </tr>
-              `).join('')}
+              ${pendentes.map(e => {
+                const dias = Math.floor((new Date() - new Date(e.data)) / (1000 * 60 * 60 * 24));
+                return `
+                  <tr>
+                    <td>${e.usuario}</td>
+                    <td>${e.ferramenta}</td>
+                    <td>${e.data}</td>
+                    <td>${dias}</td>
+                  </tr>
+                `;
+              }).join('')}
             </tbody>
           </table>
-        ` : `<p>${t.relatorios.noPendingTools}</p>`}
+        ` : `<p>Nenhuma ferramenta pendente</p>`}
       </div>
       
       <div class="report-section">
-        <h3>${t.relatorios.pendingUsers}</h3>
-        ${usuariosPendentes.length > 0 ? `
+        <h3>Usuários com Pendências</h3>
+        ${usuariosComPendencia.length > 0 ? `
           <table>
             <thead>
               <tr>
@@ -447,7 +510,7 @@ function mostrarSecao(secao) {
               </tr>
             </thead>
             <tbody>
-              ${usuariosPendentes.map(u => {
+              ${usuariosComPendencia.map(u => {
                 const ferramentas = pendentes
                   .filter(e => e.usuario === u)
                   .map(e => e.ferramenta)
@@ -461,70 +524,80 @@ function mostrarSecao(secao) {
               }).join('')}
             </tbody>
           </table>
-        ` : `<p>${t.relatorios.noPendingUsers}</p>`}
+        ` : `<p>Nenhum usuário com pendências</p>`}
       </div>
     `;
   }
 }
 
-// Funções para funcionários
-function salvarFuncionario() {
+// Funções para Funcionários
+async function salvarFuncionario() {
   const nome = document.getElementById('nomeFuncionario').value.trim();
-  if (nome && !funcionarios.includes(nome)) {
-    funcionarios.push(nome);
-    salvarDados();
-    mostrarSecao('funcionarios');
-  } else if (funcionarios.includes(nome)) {
-    alert(portuguese ? 'Funcionário já existe!' : '¡Empleado ya existe!');
+  if (!nome) {
+    showMessage('Nome é obrigatório', 'error');
+    return;
   }
+  
+  if (funcionarios.includes(nome)) {
+    showMessage('Funcionário já existe', 'warning');
+    return;
+  }
+  
+  funcionarios.push(nome);
+  await saveData();
+  mostrarSecao('funcionarios');
+  showMessage('Funcionário cadastrado com sucesso', 'success');
 }
 
-function editarFuncionario(index) {
-  const lang = portuguese ? 'pt' : 'es';
-  const t = translations[lang].funcionarios;
-  const novoNome = prompt(t.edit, funcionarios[index]);
-  
+async function editarFuncionario(index) {
+  const novoNome = prompt('Editar nome:', funcionarios[index]);
   if (novoNome && novoNome.trim() && novoNome !== funcionarios[index]) {
     if (funcionarios.includes(novoNome)) {
-      alert(portuguese ? 'Nome já existe!' : '¡Nombre ya existe!');
+      showMessage('Nome já existe', 'error');
       return;
     }
+    
+    // Atualiza empréstimos
+    const nomeAntigo = funcionarios[index];
+    emprestimos.forEach(e => {
+      if (e.usuario === nomeAntigo) e.usuario = novoNome;
+    });
+    
     funcionarios[index] = novoNome;
-    salvarDados();
+    await saveData();
     mostrarSecao('funcionarios');
+    showMessage('Funcionário atualizado', 'success');
   }
 }
 
-function excluirFuncionario(index) {
-  const lang = portuguese ? 'pt' : 'es';
-  const t = translations[lang].funcionarios;
+async function excluirFuncionario(index) {
   const nome = funcionarios[index];
+  if (!confirm(`Excluir "${nome}"?`)) return;
   
-  if (confirm(`${t.delete} "${nome}"?`)) {
-    if (emprestimos.some(e => e.usuario === nome && !e.devolvido)) {
-      alert(portuguese ? 'Não pode excluir: tem ferramentas pendentes!' : '¡No se puede eliminar: tiene herramientas pendientes!');
-      return;
-    }
-    funcionarios.splice(index, 1);
-    salvarDados();
-    mostrarSecao('funcionarios');
+  // Verifica se tem empréstimos
+  if (emprestimos.some(e => e.usuario === nome && !e.devolvido)) {
+    showMessage('Não pode excluir: tem ferramentas pendentes', 'error');
+    return;
   }
+  
+  funcionarios.splice(index, 1);
+  await saveData();
+  mostrarSecao('funcionarios');
+  showMessage('Funcionário excluído', 'success');
 }
 
-// Funções para ferramentas
-function salvarFerramenta() {
+// Funções para Ferramentas
+async function salvarFerramenta() {
   const nome = document.getElementById('nomeFerramenta').value.trim();
   const obs = document.getElementById('obsFerramenta').value.trim();
   const qtd = parseInt(document.getElementById('qtdFerramenta').value) || 1;
   
   if (!nome) {
-    alert(portuguese ? 'Nome da ferramenta é obrigatório!' : '¡Nombre de la herramienta es obligatorio!');
+    showMessage('Nome é obrigatório', 'error');
     return;
   }
   
-  if (!contadorFerramentas[nome]) {
-    contadorFerramentas[nome] = 0;
-  }
+  if (!contadorFerramentas[nome]) contadorFerramentas[nome] = 0;
   
   for (let i = 0; i < qtd; i++) {
     contadorFerramentas[nome]++;
@@ -535,19 +608,17 @@ function salvarFerramenta() {
     });
   }
   
-  salvarDados();
+  await saveData();
   mostrarSecao('ferramentas');
+  showMessage(`${qtd} ferramenta(s) adicionada(s)`, 'success');
 }
 
-function editarFerramenta(index) {
-  const lang = portuguese ? 'pt' : 'es';
-  const t = translations[lang].ferramentas;
+async function editarFerramenta(index) {
   const ferramenta = ferramentas[index];
+  const novoNome = prompt('Novo nome:', ferramenta.nome);
+  const novaObs = prompt('Novas observações:', ferramenta.obs || '');
   
-  const novoNome = prompt(`${t.edit} - Nome:`, ferramenta.nome);
   if (!novoNome || novoNome.trim() === '') return;
-  
-  const novaObs = prompt(`${t.edit} - Observações:`, ferramenta.obs || '');
   
   // Verifica se está emprestada
   const emprestada = emprestimos.some(e => 
@@ -555,24 +626,20 @@ function editarFerramenta(index) {
   );
   
   if (emprestada) {
-    alert(portuguese ? 'Não pode editar: ferramenta emprestada!' : '¡No se puede editar: herramienta prestada!');
+    showMessage('Não pode editar: ferramenta emprestada', 'error');
     return;
   }
   
   ferramenta.nome = novoNome.trim();
   ferramenta.obs = novaObs ? novaObs.trim() : null;
-  salvarDados();
+  await saveData();
   mostrarSecao('ferramentas');
+  showMessage('Ferramenta atualizada', 'success');
 }
 
-function excluirFerramenta(index) {
-  const lang = portuguese ? 'pt' : 'es';
-  const t = translations[lang].ferramentas;
+async function excluirFerramenta(index) {
   const ferramenta = ferramentas[index];
-  
-  if (!confirm(`${t.delete} "${ferramenta.nome} - ${ferramenta.numero}"?`)) {
-    return;
-  }
+  if (!confirm(`Excluir "${ferramenta.nome} - ${ferramenta.numero}"?`)) return;
   
   // Verifica se está emprestada
   const emprestada = emprestimos.some(e => 
@@ -580,17 +647,18 @@ function excluirFerramenta(index) {
   );
   
   if (emprestada) {
-    alert(portuguese ? 'Não pode excluir: ferramenta emprestada!' : '¡No se puede eliminar: herramienta prestada!');
+    showMessage('Não pode excluir: ferramenta emprestada', 'error');
     return;
   }
   
   ferramentas.splice(index, 1);
-  salvarDados();
+  await saveData();
   mostrarSecao('ferramentas');
+  showMessage('Ferramenta excluída', 'success');
 }
 
-// Funções para empréstimos
-function salvarEmprestimo() {
+// Funções para Empréstimos
+async function salvarEmprestimo() {
   const usuario = document.getElementById('usuarioEmprestimo').value;
   const ferramenta = document.getElementById('ferramentaEmprestimo').value;
   const data = document.getElementById('dataEmprestimo').value;
@@ -599,14 +667,16 @@ function salvarEmprestimo() {
     usuario,
     ferramenta,
     data,
-    devolvido: false
+    devolvido: false,
+    dataDevolucao: null
   });
   
-  salvarDados();
+  await saveData();
   mostrarSecao('emprestimos');
+  showMessage('Empréstimo registrado', 'success');
 }
 
-// Funções para devoluções
+// Funções para Devoluções
 function carregarFerramentasPendentes() {
   const usuario = document.getElementById('usuarioDevolucao').value;
   const select = document.getElementById('ferramentaDevolucao');
@@ -615,15 +685,26 @@ function carregarFerramentasPendentes() {
     e.usuario === usuario && !e.devolvido
   );
   
-  select.innerHTML = pendentes.map(e => 
-    `<option value="${e.ferramenta}">${e.ferramenta} (${e.data})</option>`
-  ).join('');
+  if (pendentes.length === 0) {
+    select.innerHTML = '<option value="">Nenhuma ferramenta pendente</option>';
+    select.disabled = true;
+  } else {
+    select.innerHTML = pendentes.map(e => 
+      `<option value="${e.ferramenta}">${e.ferramenta} (${e.data})</option>`
+    ).join('');
+    select.disabled = false;
+  }
 }
 
-function salvarDevolucao() {
+async function salvarDevolucao() {
   const usuario = document.getElementById('usuarioDevolucao').value;
   const ferramenta = document.getElementById('ferramentaDevolucao').value;
   const dataDevolucao = document.getElementById('dataDevolucao').value;
+  
+  if (!usuario || !ferramenta) {
+    showMessage('Selecione usuário e ferramenta', 'error');
+    return;
+  }
   
   const emprestimo = emprestimos.find(e => 
     e.usuario === usuario && 
@@ -634,7 +715,10 @@ function salvarDevolucao() {
   if (emprestimo) {
     emprestimo.devolvido = true;
     emprestimo.dataDevolucao = dataDevolucao;
-    salvarDados();
+    await saveData();
     mostrarSecao('devolucoes');
+    showMessage('Devolução registrada', 'success');
+  } else {
+    showMessage('Empréstimo não encontrado', 'error');
   }
 }
