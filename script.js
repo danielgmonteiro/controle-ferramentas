@@ -167,32 +167,34 @@ async function syncData() {
 
 // Buscar dados do GitHub
 async function fetchDataFromGitHub() {
-  if (!config.githubToken || !config.repoName) {
-    throw new Error('Configuração do GitHub não definida');
-  }
-  
-  const url = `https://api.github.com/repos/${config.repoName}/contents/data.json`;
-  const response = await fetch(url, {
-    headers: {
-      'Authorization': `token ${config.githubToken}`,
-      'Accept': 'application/vnd.github.v3+json'
+    if (!config.githubToken || !config.repoName) {
+      throw new Error('Configuração do GitHub incompleta');
     }
-  });
   
-  if (!response.ok) throw new Error(`Erro ao buscar dados: ${response.status}`);
+    const url = `https://api.github.com/repos/${config.repoName}/contents/data.json`;
+    try {
+      const response = await fetch(url, {
+        headers: {
+          'Authorization': `token ${config.githubToken}`,
+          'Accept': 'application/vnd.github.v3+json'
+        }
+      });
   
-  const result = await response.json();
-  const content = atob(result.content.replace(/\s/g, ''));
-  const data = JSON.parse(content);
+      if (response.status === 404) {
+        throw new Error('Arquivo data.json não encontrado no repositório');
+      }
+      if (!response.ok) {
+        throw new Error(`Erro HTTP ${response.status}: ${await response.text()}`);
+      }
   
-  funcionarios = data.funcionarios || [];
-  ferramentas = data.ferramentas || [];
-  emprestimos = data.emprestimos || [];
-  contadorFerramentas = data.contadorFerramentas || {};
-  
-  config.lastSync = new Date().toISOString();
-  localStorage.setItem('ferramentasConfig', JSON.stringify(config));
-}
+      const result = await response.json();
+      const content = atob(result.content.replace(/\s/g, ''));
+      return JSON.parse(content);
+    } catch (error) {
+      console.error('Detalhes do erro:', error);
+      throw new Error(`Falha ao buscar dados: ${error.message}`);
+    }
+  }
 
 // Enviar dados para o GitHub
 async function pushDataToGitHub() {
