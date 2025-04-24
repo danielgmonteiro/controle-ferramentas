@@ -1,18 +1,24 @@
-<<<<<<< HEAD
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Controle de Ferramentas</title>
+  <title>Controle de Ferramentas v2</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <div class="container">
     <div class="header-controls">
-      <button onclick="toggleTheme()">🌓 Tema</button>
-      <button onclick="toggleLanguage()">🌐 Idioma</button>
-      <button onclick="syncData()">🔄 Sincronizar</button>
+      <div class="config-buttons">
+        <button class="theme-toggle" onclick="toggleTheme()">🌓 Tema</button>
+        <button class="language-toggle" onclick="toggleLanguage()">🌐 Idioma</button>
+        <button class="sync-button" onclick="syncData()">🔄 Sincronizar</button>
+      </div>
+      <div class="github-config">
+        <input type="password" id="githubToken" placeholder="Token do GitHub">
+        <input type="text" id="repoName" placeholder="usuario/repositorio">
+        <button onclick="saveGithubConfig()">Salvar Config</button>
+      </div>
     </div>
     
     <h1 id="main-title">Sistema de Controle de Ferramentas</h1>
@@ -25,58 +31,14 @@
       <button onclick="mostrarSecao('relatorios')" id="btn-relatorios">Relatórios</button>
     </nav>
     
-    <div id="conteudo"></div>
+    <div id="conteudo" class="content-box"></div>
     
-    <div class="github-config">
-      <h3>Configuração do GitHub</h3>
-      <input type="password" id="githubToken" placeholder="Token do GitHub">
-      <input type="text" id="repoName" placeholder="usuario/repositorio">
-      <button onclick="saveGithubConfig()">Salvar Configuração</button>
-      <div id="syncStatus"></div>
-    </div>
+    <div class="sync-status" id="syncStatus"></div>
   </div>
 
+  <script src="translations.js"></script>
+  <script src="data.js"></script>
+  <script src="github.js"></script>
   <script src="script.js"></script>
 </body>
-=======
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Controle de Ferramentas</title>
-  <link rel="stylesheet" href="style.css">
-</head>
-<body>
-  <div class="container">
-    <div class="header-controls">
-      <button onclick="toggleTheme()">🌓 Tema</button>
-      <button onclick="toggleLanguage()">🌐 Idioma</button>
-      <button onclick="syncData()">🔄 Sincronizar</button>
-    </div>
-    
-    <h1 id="main-title">Sistema de Controle de Ferramentas</h1>
-    
-    <nav>
-      <button onclick="mostrarSecao('funcionarios')" id="btn-funcionarios">Funcionários</button>
-      <button onclick="mostrarSecao('ferramentas')" id="btn-ferramentas">Ferramentas</button>
-      <button onclick="mostrarSecao('emprestimos')" id="btn-emprestimos">Empréstimos</button>
-      <button onclick="mostrarSecao('devolucoes')" id="btn-devolucoes">Devoluções</button>
-      <button onclick="mostrarSecao('relatorios')" id="btn-relatorios">Relatórios</button>
-    </nav>
-    
-    <div id="conteudo"></div>
-    
-    <div class="github-config">
-      <h3>Configuração do GitHub</h3>
-      <input type="password" id="githubToken" placeholder="Token do GitHub">
-      <input type="text" id="repoName" placeholder="usuario/repositorio">
-      <button onclick="saveGithubConfig()">Salvar Configuração</button>
-      <div id="syncStatus"></div>
-    </div>
-  </div>
-
-  <script src="script.js"></script>
-</body>
->>>>>>> 8f17252c35e7b8f0e9c8d9b21b006adae66aae8d
 </html>
