@@ -1,6 +1,14 @@
+<<<<<<< HEAD
 {
     "funcionarios": [],
     "ferramentas": [],
     "emprestimos": [],
     "contadorFerramentas": {}
+=======
+{
+    "funcionarios": [],
+    "ferramentas": [],
+    "emprestimos": [],
+    "contadorFerramentas": {}
+>>>>>>> 8f17252c35e7b8f0e9c8d9b21b006adae66aae8d
   }
