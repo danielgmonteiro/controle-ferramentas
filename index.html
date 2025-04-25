@@ -1183,14 +1183,21 @@
           funcionarios,
           ferramentas,
           emprestimos,
-          contadorFerramentas
+          contadorFerramentas,
+          lastSync: new Date().toISOString()
         };
         
         // Verificar se o arquivo existe
-        const existingFile = await checkFileExists();
-        let sha = existingFile ? existingFile.sha : null;
+        let sha = null;
+        try {
+          const existingFile = await checkFileExists();
+          sha = existingFile ? existingFile.sha : null;
+        } catch (error) {
+          // Se o arquivo não existir, sha permanece null para criar novo
+          console.log('Arquivo não existe, será criado novo');
+        }
         
-        // Fazer upload
+        // Fazer upload (cria novo ou atualiza existente)
         const url = `https://api.github.com/repos/${repoName}/contents/data.json`;
         const response = await fetch(url, {
           method: 'PUT',
@@ -1200,8 +1207,8 @@
           },
           body: JSON.stringify({
             message: 'Atualização automática do sistema de ferramentas',
-            content: btoa(unescape(encodeURIComponent(JSON.stringify(data, null, 2)))),
-            sha: sha
+            content: btoa(unescape(encodeURIComponent(JSON.stringify(data, null, 2))),
+            sha: sha // Se null, cria novo arquivo
           })
         });
 
@@ -1218,22 +1225,21 @@
     }
 
     async function checkFileExists() {
-      try {
-        const url = `https://api.github.com/repos/${repoName}/contents/data.json`;
-        const response = await fetch(url, {
-          headers: {
-            'Authorization': `token ${githubToken}`,
-            'Accept': 'application/vnd.github.v3+json'
-          }
-        });
-        
-        if (response.status === 404) return null;
-        if (!response.ok) throw new Error(portuguese ? 'Erro ao verificar arquivo' : 'Error al verificar archivo');
-        
-        return await response.json();
-      } catch (error) {
-        throw error;
+      const url = `https://api.github.com/repos/${repoName}/contents/data.json`;
+      const response = await fetch(url, {
+        headers: {
+          'Authorization': `token ${githubToken}`,
+          'Accept': 'application/vnd.github.v3+json'
+        }
+      });
+      
+      if (response.status === 404) return null;
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || (portuguese ? 'Erro ao verificar arquivo' : 'Error al verificar archivo'));
       }
+      
+      return await response.json();
     }
 
     async function loadFromGitHub() {
