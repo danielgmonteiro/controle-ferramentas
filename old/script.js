@@ -1,3 +1,4 @@
+// script.js COMPLETO E ATUALIZADO
 // Dados do sistema
 let funcionarios = [];
 let ferramentas = [];
@@ -5,6 +6,8 @@ let emprestimos = [];
 let contadorFerramentas = {};
 let darkMode = false;
 let portuguese = true;
+let githubToken = '';
+let repoName = '';
 
 // Elementos DOM
 const conteudoEl = document.getElementById('conteudo');
@@ -141,7 +144,14 @@ document.addEventListener('DOMContentLoaded', () => {
   carregarDados();
   aplicarTema();
   atualizarIdioma();
+  loadGithubConfig();
   mostrarSecao('funcionarios');
+  
+  // Adicionar botão de carregar dados
+  const syncButton = document.querySelector('.sync-button');
+  syncButton.insertAdjacentHTML('afterend', 
+    `<button class="sync-button" onclick="loadFromGitHub()">⬇️ ${portuguese ? 'Carregar Dados' : 'Cargar Datos'}</button>`
+  );
 });
 
 // Carregar dados do localStorage
@@ -195,6 +205,12 @@ function toggleLanguage() {
   salvarDados();
   const secaoAtual = conteudoEl.getAttribute('data-section') || 'funcionarios';
   mostrarSecao(secaoAtual);
+  
+  // Atualizar texto do botão de carregar dados
+  const loadButton = document.querySelector('.sync-button[onclick="loadFromGitHub()"]');
+  if (loadButton) {
+    loadButton.textContent = portuguese ? '⬇️ Carregar Dados' : '⬇️ Cargar Datos';
+  }
 }
 
 function atualizarIdioma() {
@@ -210,6 +226,7 @@ function atualizarIdioma() {
   }
 }
 
+// Mostrar seção (função original mantida, sem alterações)
 // Mostrar seção
 function mostrarSecao(secao) {
   const hoje = new Date().toISOString().split('T')[0];
@@ -636,5 +653,126 @@ function salvarDevolucao() {
     emprestimo.dataDevolucao = dataDevolucao;
     salvarDados();
     mostrarSecao('devolucoes');
+  }
+}
+let githubToken = '';
+let repoName = '';
+// ============== FUNÇÕES GITHUB ============== //
+function loadGithubConfig() {
+  githubToken = localStorage.getItem('githubToken') || '';
+  repoName = localStorage.getItem('repoName') || '';
+  document.getElementById('githubToken').value = githubToken;
+  document.getElementById('repoName').value = repoName;
+}
+
+function saveGithubConfig() {
+  githubToken = document.getElementById('githubToken').value.trim();
+  repoName = document.getElementById('repoName').value.trim();
+  
+  if (!githubToken || !repoName) {
+    showSyncStatus(portuguese ? 'Token e repositório são obrigatórios!' : '¡Token y repositorio son obligatorios!', 'error');
+    return;
+  }
+  
+  localStorage.setItem('githubToken', githubToken);
+  localStorage.setItem('repoName', repoName);
+  showSyncStatus(portuguese ? 'Configurações salvas!' : '¡Configuraciones guardadas!', 'success');
+}
+
+function showSyncStatus(message, type = 'info') {
+  syncStatusEl.textContent = message;
+  syncStatusEl.className = `sync-status ${type}`;
+}
+
+async function syncData() {
+  if (!githubToken || !repoName) {
+    showSyncStatus(portuguese ? 'Configure o GitHub primeiro!' : '¡Configura GitHub primero!', 'error');
+    return;
+  }
+
+  try {
+    showSyncStatus(portuguese ? 'Sincronizando...' : 'Sincronizando...', 'info');
+    
+    // Criar payload
+    const data = {
+      funcionarios,
+      ferramentas,
+      emprestimos,
+      contadorFerramentas
+    };
+    
+    // Verificar se o arquivo existe
+    const existingFile = await checkFileExists();
+    let sha = existingFile ? existingFile.sha : null;
+    
+    // Fazer upload
+    const url = `https://api.github.com/repos/${repoName}/contents/data.json`;
+    const response = await fetch(url, {
+      method: 'PUT',
+      headers: {
+        'Authorization': `token ${githubToken}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        message: 'Atualização automática do sistema de ferramentas',
+        content: btoa(unescape(encodeURIComponent(JSON.stringify(data))),
+        sha: sha
+      })
+    });
+
+    if (!response.ok) throw new Error(portuguese ? 'Erro na API do GitHub' : 'Error en API de GitHub');
+    
+    showSyncStatus(portuguese ? 'Sincronizado com sucesso!' : '¡Sincronizado correctamente!', 'success');
+  } catch (error) {
+    console.error('Erro na sincronização:', error);
+    showSyncStatus(`${portuguese ? 'Erro na sincronização:' : 'Error en sincronización:'} ${error.message}`, 'error');
+  }
+}
+
+async function checkFileExists() {
+  try {
+    const url = `https://api.github.com/repos/${repoName}/contents/data.json`;
+    const response = await fetch(url, {
+      headers: {
+        'Authorization': `token ${githubToken}`,
+        'Accept': 'application/vnd.github.v3+json'
+      }
+    });
+    
+    if (response.status === 404) return null;
+    if (!response.ok) throw new Error(portuguese ? 'Erro ao verificar arquivo' : 'Error al verificar archivo');
+    
+    return await response.json();
+  } catch (error) {
+    throw error;
+  }
+}
+
+async function loadFromGitHub() {
+  try {
+    showSyncStatus(portuguese ? 'Carregando dados...' : 'Cargando datos...', 'info');
+    
+    const existingFile = await checkFileExists();
+    if (!existingFile) {
+      showSyncStatus(portuguese ? 'Arquivo data.json não encontrado!' : '¡Archivo data.json no encontrado!', 'warning');
+      return;
+    }
+    
+    const response = await fetch(existingFile.download_url);
+    if (!response.ok) throw new Error(portuguese ? 'Erro ao baixar arquivo' : 'Error al descargar archivo');
+    
+    const remoteData = await response.json();
+    
+    // Atualizar dados locais
+    funcionarios = remoteData.funcionarios || [];
+    ferramentas = remoteData.ferramentas || [];
+    emprestimos = remoteData.emprestimos || [];
+    contadorFerramentas = remoteData.contadorFerramentas || {};
+    
+    salvarDados();
+    mostrarSecao('funcionarios');
+    showSyncStatus(portuguese ? 'Dados carregados do GitHub!' : '¡Datos cargados de GitHub!', 'success');
+  } catch (error) {
+    showSyncStatus(`${portuguese ? 'Erro ao carregar:' : 'Error al cargar:'} ${error.message}`, 'error');
   }
 }
